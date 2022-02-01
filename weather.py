@@ -5,11 +5,18 @@ import json
 import sys
 from configparser import ConfigParser
 from urllib import error, parse, request
+import style
 
 BASE_WEATHER_API_URL = "http://api.openweathermap.org/data/2.5/weather"
-PADDING=20
-REVERSE = "\033[;7m"
-RESET = "\033[0m"
+# Weather Condition Codes
+# https://openweathermap.org/weather-conditions#Weather-Condition-Codes-2
+THUNDERSTORM = range(200, 300)
+DRIZZLE = range(300, 400)
+RAIN = range(500, 600)
+SNOW = range(600, 700)
+ATMOSPHERE = range(700, 800)
+CLEAR = range(800, 801)
+CLOUDY = range(801, 900)
 
 def read_user_cli_args():
         """Handles the CLI user interactions
@@ -90,11 +97,41 @@ def display_weather_info(weather_data, imperial=False):
                 imperial (bool): Whether or not to use imperial units for tem
         """
         city = weather_data["name"]
+        weather_id = weather_data["weather"][0]["id"]
         weather_description = weather_data["weather"][0]["description"]
         temperature = weather_data["main"]["temp"]
-        print(f"{REVERSE}{city:^{PADDING}}{RESET}", end="")
-        print(f"\t{weather_description.capitalize():^{PADDING}}", end=" ")
+
+        style.change_color(style.REVERSE)
+        print(f"{city:^{style.PADDING}}", end="")
+        style.change_color(style.RESET)
+
+        weather_symbol, color = _select_weather_display_params(weather_id)
+
+        style.change_color(color)
+        print(f"\t{weather_symbol}", end=" ")
+        print(f"\t{weather_description.capitalize():^{style.PADDING}}", end=" ")
+        style.change_color(style.RESET)
+
         print(f"({temperature}°{'F' if imperial else 'C'})")
+
+def _select_weather_display_params(weather_id):
+    if weather_id in THUNDERSTORM:
+        display_params = ("💥", style.RED)
+    elif weather_id in DRIZZLE:
+        display_params = ("💧", style.CYAN)
+    elif weather_id in RAIN:
+        display_params = ("💦", style.BLUE)
+    elif weather_id in SNOW:
+        display_params = ("⛄️", style.WHITE)
+    elif weather_id in ATMOSPHERE:
+        display_params = ("🌀", style.BLUE)
+    elif weather_id in CLEAR:
+        display_params = ("🔆", style.YELLOW)
+    elif weather_id in CLOUDY:
+        display_params = ("💨", style.WHITE)
+    else:  # In case the API adds new weather codes
+        display_params = ("🌈", style.RESET)
+    return display_params
 
 if __name__ == "__main__":
         user_args= read_user_cli_args()
