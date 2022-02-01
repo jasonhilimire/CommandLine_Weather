@@ -7,6 +7,9 @@ from configparser import ConfigParser
 from urllib import error, parse, request
 
 BASE_WEATHER_API_URL = "http://api.openweathermap.org/data/2.5/weather"
+PADDING=20
+REVERSE = "\033[;7m"
+RESET = "\033[0m"
 
 def read_user_cli_args():
         """Handles the CLI user interactions
@@ -80,13 +83,22 @@ def get_weather_data(query_url):
         except json.JSONDecodeError:
                 sys.exit("Coudlnt read the server response")
 
+def display_weather_info(weather_data, imperial=False):
+        """Prints formatted weather information about a city
+        Args:
+                weather_data (dict): API response from OpenWeather by city name
+                imperial (bool): Whether or not to use imperial units for tem
+        """
+        city = weather_data["name"]
+        weather_description = weather_data["weather"][0]["description"]
+        temperature = weather_data["main"]["temp"]
+        print(f"{REVERSE}{city:^{PADDING}}{RESET}", end="")
+        print(f"\t{weather_description.capitalize():^{PADDING}}", end=" ")
+        print(f"({temperature}°{'F' if imperial else 'C'})")
+
 if __name__ == "__main__":
         user_args= read_user_cli_args()
-        print(user_args.city, user_args.imperial)
+        # print(user_args.city, user_args.imperial)
         query_url = build_weather_query(user_args.city, user_args.imperial)
         weather_Data = get_weather_data(query_url)
-        print(
-                f"{weather_Data['name']}: "
-                f"{weather_Data['weather'][0]['description']} "
-                f"({weather_Data['main']['temp']})"
-                )
+        display_weather_info(weather_Data, user_args.imperial)
