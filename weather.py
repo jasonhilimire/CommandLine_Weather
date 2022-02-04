@@ -30,10 +30,10 @@ def read_user_cli_args():
                 "city", nargs="+", type=str, help="enter the city name"
         )
         parser.add_argument(
-                "-i",
-                "--imperial",
+                "-m",
+                "--metric",
                 action="store_true",
-                help="display the temperature in imperial units"
+                help="display the temperature in celcius/metric units"
         )
         return parser.parse_args()
 
@@ -49,19 +49,19 @@ def _get_api_key():
         config.read("secrets.ini")
         return config["openweather"]["api_key"]
 
-def build_weather_query(city_input, imperial=False):
+def build_weather_query(city_input, metric=False):
         """ Builds the URL for an API request to OpenWeathers API
 
         Args:
                 city_input (List[str]): Name of a city as collected by argparse
-                imperial (bool): Whether or not to use imperial units for temp
+                metric (bool): Whether or not to use metric units for temp
         Returns:
-                str: URL formatted for OpenWEathers city name endpoint
+                str: URL formatted for OpenWeathers city name endpoint
         """
         api_key = _get_api_key()
         city_name = " ".join(city_input)
         url_encoded_city_name = parse.quote_plus(city_name)
-        units = "imperial" if imperial else "metric"
+        units = "metric" if metric else "imperial"
         url = (
                 f"{BASE_WEATHER_API_URL}?q={url_encoded_city_name}"
                 f"&units={units}&appid={api_key}"
@@ -90,11 +90,11 @@ def get_weather_data(query_url):
         except json.JSONDecodeError:
                 sys.exit("Coudlnt read the server response")
 
-def display_weather_info(weather_data, imperial=False):
+def display_weather_info(weather_data, metric=False):
         """Prints formatted weather information about a city
         Args:
                 weather_data (dict): API response from OpenWeather by city name
-                imperial (bool): Whether or not to use imperial units for tem
+                metric (bool): Whether or not to use metric units for tem
         """
         city = weather_data["name"]
         weather_id = weather_data["weather"][0]["id"]
@@ -112,7 +112,7 @@ def display_weather_info(weather_data, imperial=False):
         print(f"\t{weather_description.capitalize():^{style.PADDING}}", end=" ")
         style.change_color(style.RESET)
 
-        print(f"({temperature}°{'F' if imperial else 'C'})")
+        print(f"({temperature}°{'C' if metric else 'F'})")
 
 def _select_weather_display_params(weather_id):
     if weather_id in THUNDERSTORM:
@@ -135,7 +135,7 @@ def _select_weather_display_params(weather_id):
 
 if __name__ == "__main__":
         user_args= read_user_cli_args()
-        # print(user_args.city, user_args.imperial)
-        query_url = build_weather_query(user_args.city, user_args.imperial)
+        # print(user_args.city, user_args.metric)
+        query_url = build_weather_query(user_args.city, user_args.metric)
         weather_Data = get_weather_data(query_url)
-        display_weather_info(weather_Data, user_args.imperial)
+        display_weather_info(weather_Data, user_args.metric)
